@@ -4,21 +4,32 @@ output: html_document
 date: "2025-02-24"
 ---
 
+Nithila Sathieskumar 20279386
+Mari Hyde 20261425
+Taylor PD 20310351
+Noah Gandl Black 20301317
+Sara Gama 20292893
+
+https://github.com/marihyde/Rentrez.git 
+
+
+Loading in Sequences File: 
+
 ```{r}
-Sequences<-read.csv("Sequences.csv")
+Sequences<-read.csv("Sequences.csv", stringsAsFactors = FALSE)
 print(Sequences)
 ```
+
 
 Counting base pairs: 
 
 ```{r}
-
 count_bases <- function(Sequences) {
   A <- sum(strsplit(Sequences, "")[[1]] == "A")
   T <- sum(strsplit(Sequences, "")[[1]] == "T")
   C <- sum(strsplit(Sequences, "")[[1]] == "C")
   G <- sum(strsplit(Sequences, "")[[1]] == "G")
-return(data.frame(A = A, T = T, C = C, G = G))
+  return(data.frame(A = A, T = T, C = C, G = G))
 }
 
 base_counts <- do.call(rbind, lapply(Sequences$Sequence, count_bases))
@@ -28,12 +39,91 @@ print(base_counts)
 
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+Printing each sequence: 
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+for (i in Sequences){
+  print (i)
+}
+
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+Picture of bacteria:
+
+![bacteria](https://www.bayarealyme.org/wp-content/uploads/2014/08/borrelia-burgdorferi.jpg)
+
+*Source: [Bay Area Lyme Foundation](https://www.bayarealyme.org/about-lyme/what-causes-lyme-disease/borrelia-burgdorferi/)*
+
+
+
+Calculating GC content:
+
+```{r}
+
+gc_content <- function(sequence) {
+  gc_count <- sum(strsplit(sequence, "")[[1]] %in% c("G", "C"))
+  return(round((gc_count / nchar(sequence)) * 100, 2))  # Return percentage with 2 decimals
+}
+
+
+Sequences$GC_Content <- sapply(Sequences$Sequence, gc_content)
+
+final_table <- Sequences[, c("Name", "GC_Content")]
+colnames(final_table) <- c("Sequence_ID", "GC_Content")
+
+print(final_table)
+
+
+
+```
+
+## PART 2
+
+Installing required packages: 
+
+```{r, echo=FALSE }
+
+library(rentrez)
+  
+library(knitr)        
+library(ggplot2)
+library(annotate)
+library(sangerseqR)
+library(BiocManager)
+install("Biostrings")
+```
+
+
+
+A blood sample from a critically ill patient was analyzed using nanopore sequencing. After filtering out human DNA, an unusual non-human sequence was identified. To determine its origin, we performed a BLAST search against the NCBI GenBank database and aligned the unknown sequence with the closest match to assess similarity. This report outlines the methods, results, and clinical implications of the findings.
+
+
+Storing the unknown data sequence:
+
+```{r}
+unknown_sequence <- DNAString("GCCTGATGGAGGGGGATAACTACTGGAAACGGTAGCTAATACCGCATGACCTCGCAAGAGCAAAGTGGGGGACCTTAGGGCCTCACGCCATCGGATGAACCCAGATGGGATTAGCTAGTAGGTGGGGTAATGGCTCACCTAGGCGACGATCCCTAGCTGGTCTGAGAGGATGACCAGCCACACTGGAACTGAGACACGGTCCAGACTCCTACGGGAGGCAGCAGTGGGGAATATTGCACAATGGGCGCAA")
+
+
+```
+
+
+Running the alignment: 
+
+```{r}
+blast<-blastSequences(paste(unknown_sequence),as='data.frame', timeout=240)
+
+
+results <- data.frame('Match'=blast$Hit_def, 'Aligned_Nucleotides'=(blast$Hsp_identity), 'E_value'=blast$Hsp_evalue, "ID"= blast$Hit_accession)
+head(results)
+
+
+
+```
+
+
+
+The unknown sequence from the patient’s blood sample was identified using BLAST analysis and matched closely to Yersinia pestis strain 46514, the bacterium responsible for plague, with a low E-value of 1.35e-122 which is a  high significant match. Yersinia pestis can cause pneumonic, septicaemic, or bubonic plague, all of which need immediate medical attention. It is advised to get confirmation very away with further molecular tests, including PCR or culture-based diagnostics, due to the clinical consequences. If verified, this discovery is extremely concerning and calls for quick isolation, effective antibiotic therapy (such as streptomycin or doxycycline), and public health initiatives to stop possible epidemics.
